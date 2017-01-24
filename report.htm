@@ -1,0 +1,290 @@
+<html>
+
+<head>
+    <title>Marketing Cloud Javascript SDK</title>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="wsse.js"></script>
+    <script type="text/javascript" src="marketing_cloud.js"></script>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['table']}]}"></script>
+</head>
+
+<body>
+    <td><button id="getResult" disabled>Get Result</button></td>
+    <td><button id="getsocial" disabled>Get Social</button></td>
+
+    <div id="api-response">&nbsp;</div>
+    <div id="resultspace">&nbsp;</div>
+    <div id="d3table">&nbsp;</div>
+
+    <div id="table_div"></div>
+    <script>
+    </script>
+
+    <script type="text/javascript">
+        var username = "";
+        var secret = "";
+        var endpoint = "api.omniture.com";
+        var reportID = "";
+        var iFrequency = 5000; // expressed in miliseconds
+        var myInterval = 0;
+        var reportID = "";
+
+        // STARTS and Resets the loop if any
+        function startLoop() {
+            if (myInterval > 0) clearInterval(myInterval); // stop
+            myInterval = setInterval("GetReport()", iFrequency); // run
+        }
+
+        function GetReport() {
+            if (reportID > 0) {
+                getAPIResponse();
+            }
+        }
+
+
+
+        $(document).ready(function() {
+
+            var method = "Report.Queue";
+            var params = {
+                "reportDescription": {
+                    "reportSuiteID": "",
+                    "date": "2016-05-04",
+                    "metrics": [{
+                            "id": "[event1]+[event2]+[event5]+[event7]"
+                        },
+                        {
+                            "id": "[event5]+[event7]"
+                        },
+                        {
+                            "id": "event4"
+                        },
+                        {
+                            "id": "bounces"
+                        },
+                        {
+                            "id": "visitors"
+                        },
+                        {
+                            "id": "visits"
+                        }
+
+                    ],
+                    "elements": [{
+                        "id": "evar2",
+                        "selected": [],
+                    }],
+                    "currentData": "true",
+                }
+            };
+
+            MarketingCloud.makeRequest(username, secret, method, params, endpoint, function(response) {
+                $('#api-response').html(response.responseText);
+                var responseText = response.responseText;
+                var responseObject = JSON.parse(responseText);
+                reportID = responseObject.reportID;
+
+            });
+            setTimeout(startLoop, 8000);
+        });
+
+
+        function getAPIResponse() {
+            console.log("Processing Object...");
+            method = "Report.Get";
+            params = {
+                "reportID": reportID
+            };
+            MarketingCloud.makeRequest(username, secret, method, params, endpoint, function(response) {
+                $('#d3table').html(JSON.stringify(response.responseJSON));
+                try {
+                    var responseObject = JSON.parse(response.responseText);
+                    var reportSuite = responseObject.report.reportSuite.name;
+                    var report = responseObject.report;
+                    var reportDate = report.period;
+                    var data = report.data;
+                    var totals = report.totals;
+                    var metrics = report.metrics;
+                    var numMetrics = metrics.length;
+                    var elements = report.elements;
+                    var numElements = elements.length;
+                    if (data.length > 0) {
+                        clearInterval(myInterval);
+                    } //To stop every 5 sec loop once we are sure data is received.
+                    var rdata = [];
+                    var rows = [];
+
+                    for (var j = data.length - 1; j >= 0; j--) {
+                        rdata.push(data[j].name);
+                        for (var i = 6 - 1; i >= 0; i--) {
+                            rdata.push(data[j].counts[i]);
+
+                        };
+
+                        rows.push(rdata);
+                        var rdata = [];
+                    };
+
+                    console.log(rows[6]);
+
+
+
+
+                    var a = ['Mike', '$10,000', 'true', 'as', 'ss', 'asdf', 'asfsf', 'asdf'];
+                    var row1 = rows[0].slice();
+
+                    var row2 = rows[1].slice();
+                    var row3 = rows[2].slice();
+                    var row4 = rows[3].slice();
+                    var row5 = rows[4].slice();
+                    var row6 = rows[5].slice();
+                    var row7 = rows[6].slice();
+                    var row8 = rows[7].slice();
+                    var row9 = rows[8].slice();
+                    var row10 = rows[9].slice();
+                    var row11 = rows[10].slice();
+                    var row12 = rows[11].slice();
+                    var row13 = rows[12].slice();
+                    /*var row14 = rows[13].slice();  
+                    var row15 = rows[14].slice();
+                    var row16 = rows[15].slice();
+                    var row17 = rows[16].slice();*/
+
+
+
+
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Site Name', {
+                        'className': 'bold-font'
+                    });
+                    data.addColumn('string', 'Visits');
+                    data.addColumn('string', 'Visitors');
+                    data.addColumn('string', 'Bounces');
+                    data.addColumn('string', 'No. of Errors');
+                    data.addColumn('string', '1st and 2nd Level');
+                    data.addColumn('string', 'Digital Engagement');
+                    data.addRows([
+                        row13, row1, row2, row3, row4, row5, row6, row7, row8, row9, row10, row11, row12
+
+                    ]);
+
+                    var table = new google.visualization.Table(document.getElementById('table_div'));
+
+
+                    table.draw(data, {
+                        showRowNumber: false,
+                        frozenColumns: 1
+                    });
+
+                } //try block end.
+                catch (err) {
+                    console.log("Report not ready yet. " + err.message);
+                }
+
+
+            });
+        }
+    </script>
+
+
+
+    <script>
+        $(document).ready(function() {
+
+            var method = "Report.Queue";
+            var params2 = {
+                "reportDescription": {
+                    "reportSuiteID": "uhgoptumglobalprod",
+                    "date": "2016-06-01",
+                    "metrics": [{
+                        "id": "instances"
+                    }],
+                    "elements": [{
+                        "id": "prop47",
+                        "selected": ["Facebook", "LinkedIn", "YouTube", "Twitter"],
+                    }],
+                    "currentData": "true",
+                }
+            };
+
+            MarketingCloud.makeRequest(username, secret, method, params2, endpoint, function(response) {
+                $('#api-response').html(response.responseText);
+                var responseText = response.responseText;
+                var responseObject = JSON.parse(responseText);
+                var reportID = responseObject.reportID;
+                $("button").data("reportID", reportID);
+                $("#getsocial").removeAttr('disabled');
+
+
+            });
+        });
+
+
+        $("#getsocial").click(function(e) {
+            var reportID = $("#getsocial").data("reportID");
+
+
+            if (0 < reportID) {
+                method = "Report.Get";
+                params = {
+                    "reportID": reportID
+
+                };
+
+            }
+
+            MarketingCloud.makeRequest(username, secret, method, params, endpoint, function(response) {
+                $('#d3table').html(JSON.stringify(response.responseJSON));
+
+                var responseObject = JSON.parse(response.responseText);
+                console.log(responseObject);
+                var reportSuite = responseObject.report.reportSuite.name;
+                var report = responseObject.report;
+                var reportDate = report.period;
+                var data = report.data;
+                var totals = report.totals;
+                var metrics = report.metrics;
+                var numMetrics = metrics.length;
+                var elements = report.elements;
+                var numElements = elements.length;
+                console.log(responseObject);
+
+                var rdata = [];
+                var rows = [];
+
+                for (var j = data.length - 1; j >= 0; j--) {
+                    rdata.push(data[j].name);
+                    for (var i = 2 - 1; i >= 0; i--) {
+                        rdata.push(data[j].counts[i]);
+
+                    };
+
+                    rows.push(rdata);
+                    var rdata = [];
+                };
+
+
+
+
+                var a = ['Mike', '$10,000', 'true', 'as', 'ss', 'asdf', 'asfsf', 'asdf'];
+                var row1 = rows[0].slice();
+
+                var row2 = rows[1].slice();
+                var row3 = rows[2].slice();
+                var row4 = rows[3].slice();
+
+
+
+
+            });
+        });
+    </script>
+
+
+
+</body>
+
+</html>
+<form>
